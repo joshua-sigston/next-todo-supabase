@@ -5,8 +5,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Send } from 'lucide-react';
 import { useRef } from 'react';
+import { useFormStatus } from 'react-dom';
+import { todoOptomisticUpdate } from './TodoList';
+import { Todo } from '@/types/custom';
 
 function FormContent() {
+  const { pending } = useFormStatus();
   return (
     <>
       <Textarea
@@ -15,7 +19,7 @@ function FormContent() {
         required
         placeholder="Add a new todo"
       />
-      <Button type="submit" size="icon" className="min-w-10">
+      <Button type="submit" size="icon" className="min-w-10" disabled={pending}>
         <Send className="h-5 w-5" />
         <span className="sr-only">Submit Todo</span>
       </Button>
@@ -23,7 +27,11 @@ function FormContent() {
   );
 }
 
-export function TodoForm() {
+export function TodoForm({
+  optomisticUpdate,
+}: {
+  optomisticUpdate: todoOptomisticUpdate;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   return (
     <Card>
@@ -31,6 +39,14 @@ export function TodoForm() {
         <form
           ref={formRef}
           action={async (data) => {
+            const newTodo: Todo = {
+              id: -1,
+              inserted_at: '',
+              user_id: '',
+              task: data.get('todo') as string,
+              is_complete: false,
+            };
+            optomisticUpdate({ action: 'create', todo: newTodo });
             await addTodo(data);
             formRef.current?.reset();
           }}

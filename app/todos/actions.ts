@@ -1,5 +1,6 @@
 "use server"
 
+import { Todo } from "@/types/custom"
 import { createClient } from "@/utils/supabase/server"
 import { revalidatePath } from "next/cache"
 
@@ -18,7 +19,7 @@ export async function addTodo(formData: FormData) {
     throw new Error('You must log in.')
   }
 
-  const {error, data} = await supabase.from("todos").insert({
+  const {error} = await supabase.from("todos").insert({
     task: text,
     user_id: user.id
   })
@@ -29,3 +30,45 @@ export async function addTodo(formData: FormData) {
 
   revalidatePath('/todos')
 }
+
+export async function deleteTodo(id: number) {
+  const supabase = createClient()
+  const {data : {user}} = await supabase.auth.getUser()
+  console.log(user)
+
+  if (!user) {
+    throw new Error('You must log in.')
+  }
+
+    const {error} = await supabase.from("todos").delete().match({
+      user_id: user.id,
+      id: id
+    })
+
+    if (error) {
+      throw new Error('Error adding task.')
+    }
+
+    revalidatePath('/todos')
+  }
+
+  export async function updateTodo(todo: Todo) {
+    const supabase = createClient()
+    const {data : {user}} = await supabase.auth.getUser()
+    console.log(user)
+  
+    if (!user) {
+      throw new Error('You must log in.')
+    }
+  
+      const {error} = await supabase.from("todos").update(todo).match({
+        user_id: user.id,
+        id: todo.id
+      })
+  
+      if (error) {
+        throw new Error('Error adding task.')
+      }
+  
+      revalidatePath('/todos')
+  }
